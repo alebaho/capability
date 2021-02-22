@@ -8,6 +8,7 @@ setuptools.setup(
     version="0.0.1rc5",
     author="Alexandre Baharov",
     author_email="alex.baharov@gmail.com",
+    license="LGPLv3",
     description="A collecton of tools for capability analysis for Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -21,12 +22,11 @@ setuptools.setup(
         "dpm",
         "yield",
         "SigmaLevel",
-        ],
+    ],
     classifiers=[
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: LGPLv3",
         "Operating System :: OS Independent",
     ],
     install_requires=[
