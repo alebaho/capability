@@ -11,7 +11,7 @@ setuptools.setup(
     description="A collecton of tools for capability analysis for Python.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/alebaho/quality-control",
+    url="https://github.com/alebaho/capability",
     keywords=[
         "capability",
         "Cpk",
