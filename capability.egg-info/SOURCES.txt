@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+capability/__init__.py
+capability/capability.py
+capability/tables.py
+capability.egg-info/PKG-INFO
+capability.egg-info/SOURCES.txt
+capability.egg-info/dependency_links.txt
+capability.egg-info/requires.txt
+capability.egg-info/top_level.txt
