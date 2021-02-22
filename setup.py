@@ -26,7 +26,7 @@ setuptools.setup(
         "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: LGPLv3",
         "Operating System :: OS Independent",
     ],
     install_requires=[
