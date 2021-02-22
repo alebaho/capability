@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
 import seaborn as sns
 from scipy.stats import norm, chi2
-import tables as tbl_cap
+from capability import tables as tbl
 import datetime
 
 
@@ -220,7 +220,7 @@ class Capability():
             return round(np.array(self.lst).std(ddof=1), 7)
         elif self.m == 1 and self.n < 15:
             return round(
-                np.array(self.lst).std(ddof=1) / tbl_cap.get_c4(self.n), 7)
+                np.array(self.lst).std(ddof=1) / tbl.get_c4(self.n), 7)
         else:
             s = []
             for i in range(self.m):
@@ -229,12 +229,12 @@ class Capability():
                 return round(np.array(s).std(ddof=1), 7)
             else:
                 return round(
-                    np.array(s).std(ddof=1) / tbl_cap.get_c4(len(s)), 7)
+                    np.array(s).std(ddof=1) / tbl.get_c4(len(s)), 7)
 
     def s_short(self):
         """Calculate the short term standard deviation."""
         if self.m == 1:
-            return round(self.r_bar() / tbl_cap.get_d2(2), 7)
+            return round(self.r_bar() / tbl.get_d2(2), 7)
         elif self.m > 1 and sum(self.n) >= 15:
             s_temp = []
             for i in range(self.m):
@@ -244,12 +244,12 @@ class Capability():
             s_temp_nom = []
             s_temp_denom = []
             for i in range(self.m):
-                temp = 1 - tbl_cap.get_c4(self.n[i]) * (self.n[i]**2)
+                temp = 1 - tbl.get_c4(self.n[i]) * (self.n[i]**2)
                 s = np.array(self.lst[i]).std(ddof=1)
                 nominator = (
-                    (tbl_cap.get_c4(self.n[i]) * self.n[i]) / temp) * s
+                    (tbl.get_c4(self.n[i]) * self.n[i]) / temp) * s
                 s_temp_nom.append(nominator)
-                denominator = ((tbl_cap.get_c4(self.n[i]) * (self.n[i]**2)) /
+                denominator = ((tbl.get_c4(self.n[i]) * (self.n[i]**2)) /
                                temp)
                 s_temp_denom.append(denominator)
             return round(sum(s_temp_nom) / sum(s_temp_denom), 7)
