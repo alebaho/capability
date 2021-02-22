@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setuptools.setup(
     name="capability",
-    version="0.0.1rc1",
+    version="0.0.1rc4",
     author="Alexandre Baharov",
     author_email="alex.baharov@gmail.com",
     description="A collecton of tools for capability analysis for Python.",
@@ -33,8 +33,8 @@ setuptools.setup(
         "scipy>=1.5.2",
         "numpy>=1.19.2",
         "matplotlib>=3.3.2",
-        "pandas>=1.1.2",
-        "seabonr>=0.11.1",
+        "pandas>=1.0.1",
+        "seaborn>=0.11.0",
     ],
     packages=setuptools.find_packages(
         exclude=["*.tests", "*.tests.*", "*.notebooks", "*.notebooks.*"]
