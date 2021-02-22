@@ -37,7 +37,7 @@ setuptools.setup(
         "seaborn>=0.11.0",
     ],
     packages=setuptools.find_packages(
-        exclude=["*.tests", "*.tests.*", "*.notebooks", "*.notebooks.*"]
+        exclude=["*.tests", "*.tests.*", "*.notebooks", "*.notebooks.*", ".gitignore"]
     ),
     python_requires='>=3.6',
 )
