@@ -37,6 +37,7 @@ setuptools.setup(
         "seabonr>=0.11.1",
     ],
     packages=setuptools.find_packages(
-        exclude=["*.tests", "*.tests.*", "*.notebooks", "*.notebooks.*"],
+        exclude=["*.tests", "*.tests.*", "*.notebooks", "*.notebooks.*"]
+    ),
     python_requires='>=3.6',
 )
