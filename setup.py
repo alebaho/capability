@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setuptools.setup(
     name="capability",
-    version="0.0.1rc4",
+    version="0.0.1rc5",
     author="Alexandre Baharov",
     author_email="alex.baharov@gmail.com",
     description="A collecton of tools for capability analysis for Python.",
