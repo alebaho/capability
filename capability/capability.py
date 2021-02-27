@@ -11,6 +11,7 @@ import seaborn as sns
 from scipy.stats import norm, chi2
 from capability import tables as tbl
 import datetime
+import math
 
 
 class Capability():
@@ -19,7 +20,7 @@ class Capability():
 
     The methods are capability ratios, performance ratios, confidence
     interval, short term and long term standard deviations, USL, LSL, Target,
-    number of samples, number of subsamples, x-bar, subsample means, r-bar, k,
+    number of samples, number of supsamples, x-bar, subsample means, r-bar, k,
     z levels, non-conformities, defects per milion, yield, sigma level, degrees
     of freedom.
 
@@ -49,7 +50,7 @@ class Capability():
     m: float
         The number of sample groups.
     n: float
-        The number of subsamples in each sample group.
+        The number of supsamples in each sample group.
     subsample_means(): list of floats.
         Return the n means for each sample group m.
     x_bar(): float.
@@ -107,7 +108,7 @@ class Capability():
         Options: 'short', 'long'.
         Return the Sigma level for short or long standard deviation.
         Needs USL or LSL to be specified.
-    calculate_ddof():
+    ddof():
         Calculate the degrees of freedom.
     confidence(ci=0.95, cal='cpk'): float.
         cal: one of 'cp', 'pp', 'cpk', 'ppk'.
@@ -128,22 +129,32 @@ class Capability():
                  unit=None,
                  timestamp=None):
         """Initiliaze attributes to describe a variable."""
-
         if timestamp == 'now':
             timestamp = datetime.datetime.today().strftime(
-                "%b %d, %Y\n%H:%M:%S")
+                "%b %d, %Y - %H:%M:%S")
         elif timestamp is None:
             timestamp = ''
         self.title = title
         self.unit = unit
-        if not isinstance(lst, (np.ndarray, list)):
-            raise ValueError("Data must be a list or ndarray type.")
+        if not isinstance(lst, list):
+            raise ValueError("Data must be a list or list of lists.")
+        # verify if list of lists or not:
+        self.lofl = any(isinstance(el, list) for el in lst)
         self.lst = lst
+        if self.lofl == True:
+            old_length = len(lst)
+            for el, sample in enumerate(lst):
+                if len(sample) < 15:
+                    del lst[el]
+            self.lst = lst
+            # print(
+            #     f'All samples with lenght less than 15 were deleted.\n\tOld list had {old_length} samples.\n\tThe new list has {len(lst)} samples.'
+            # )
         self.m = self.samples()
         self.n = self.subsamples()
         if self.m == 1:
-            if self.n < 20:
-                raise ValueError("Need at least 20 values.")
+            if sum(self.n) < 5:
+                raise ValueError(f'Need more than 5 points!')
         if self.m > 1:
             if self.n[0] < 2:
                 raise ValueError("Need at least two values.")
@@ -159,100 +170,93 @@ class Capability():
             pass
         else:
             self.midpoint = (usl + lsl) / 2
-
         self.timestamp = timestamp
+
+    @staticmethod
+    def Average(lst):
+        """Get average of a list"""
+        return sum(lst) / len(lst)
 
     def samples(self):
         """Count number of samples."""
-        # ary = np.array(self.lst)
-        if len(self.lst) == 1:
+        if self.lofl == False:
             return 1
         else:
-            return self.lst.shape[0]
+            return sum(1 for el in self.lst)
 
     def subsamples(self):
-        """Count the number of subsamples in a sample."""
-        # ary = np.array(self.lst)
-        if self.m == 1:
-            return self.lst.shape[0]
+        """Count the number of supsamples in a sample."""
+        if self.lofl == False:
+            return [len(self.lst)]
         else:
-            subsample_count = []
-            for i in range(self.lst.shape[0]):
-                subsample_count.append(self.lst[i].shape[0])
-        return subsample_count
+            subs_count = []
+            for i in range(self.m):
+                subs_count.append(len(self.lst[i]))
+            return subs_count
 
     def subsample_means(self):
         """Return the mean for each sample."""
-        ary = np.array(self.lst)
-        if len(ary.shape) == 1:
-            return self.x_bar()
+        if self.lofl == False:
+            return [Capability.Average(self.lst)]
         else:
-            subsample_means = []
-            for i in range(ary.shape[0]):
-                subsample_means.append(round(np.mean(ary[i]), 3))
-        return subsample_means
+            subs_count = []
+            for sample in range(self.m):
+                subs_count.append(
+                    round(Capability.Average(self.lst[sample]), 3))
+            return subs_count
 
     def x_bar(self):
         """Calculate the x-bar."""
-        if self.m == 1:
-            xbar = np.average(self.lst)
-        else:
-            x_means = []
-            for i in range(self.m):
-                x_means.append(np.mean(self.lst[i]))
-            xbar = np.average(x_means)
+        xbar = Capability.Average(self.subsample_means())
         return round(xbar, 3)
 
     def r_bar(self):
         """Calculate the r-bar."""
         r = []
-        if self.m == 1:
-            for i in range(len(self.lst) - 1):
-                r.append(abs(self.lst[i + 1] - self.lst[i]))
+        if self.lofl == False:
+            for subs in range(self.n[0] - 1):
+                r.append(abs(self.lst[subs + 1] - self.lst[subs]))
         else:
-            for sample in range(self.m):
-                r.append(max(self.lst[sample]) - min(self.lst[sample]))
-        return round(np.mean(r), 3)
+            for subs in range(self.m):
+                r.append(max(self.lst[subs]) - min(self.lst[subs]))
+        return round(Capability.Average(r), 3)
 
     def s_long(self):
         """Calculate the long term standard deviation."""
-        if self.m == 1 and self.n >= 15:
-            return round(np.array(self.lst).std(ddof=1), 7)
-        elif self.m == 1 and self.n < 15:
-            return round(
-                np.array(self.lst).std(ddof=1) / tbl.get_c4(self.n), 7)
-        else:
-            s = []
-            for i in range(self.m):
-                s.extend(self.lst[i])
-            if len(s) >= 15:
-                return round(np.array(s).std(ddof=1), 7)
+        def stdv(lst):
+            """Calculate the standard deviaton"""
+            return np.array(lst).std(ddof=1)
+
+        if self.lofl == False:
+            if self.n[0] >= 15:
+                return round(stdv(self.lst), 7)
             else:
-                return round(
-                    np.array(s).std(ddof=1) / tbl.get_c4(len(s)), 7)
+                return round(stdv(self.lst) / tbl.get_c4(self.n[0]), 7)
+        else:
+            long_list = []
+            for sample in range(self.m):
+                long_list.extend(self.lst[sample])
+            if len(long_list) >= 15:
+                return round(stdv(long_list), 7)
+            else:
+                return round(stdv(long_list) / tbl.get_c4(len(s)), 7)
 
     def s_short(self):
         """Calculate the short term standard deviation."""
-        if self.m == 1:
+        if self.lofl == False:
             return round(self.r_bar() / tbl.get_d2(2), 7)
-        elif self.m > 1 and sum(self.n) >= 15:
-            s_temp = []
-            for i in range(self.m):
-                s_temp.append(self.n[i] * np.array(self.lst[i]).std(ddof=1))
-            return round(sum(s_temp) / sum(self.n), 7)
         else:
-            s_temp_nom = []
-            s_temp_denom = []
-            for i in range(self.m):
-                temp = 1 - tbl.get_c4(self.n[i]) * (self.n[i]**2)
-                s = np.array(self.lst[i]).std(ddof=1)
-                nominator = (
-                    (tbl.get_c4(self.n[i]) * self.n[i]) / temp) * s
-                s_temp_nom.append(nominator)
-                denominator = ((tbl.get_c4(self.n[i]) * (self.n[i]**2)) /
-                               temp)
-                s_temp_denom.append(denominator)
-            return round(sum(s_temp_nom) / sum(s_temp_denom), 7)
+            numerator = []
+            for sample in range(self.m):
+                numerator.append((self.n[sample] - 1) *
+                                 (np.array(self.lst[sample]).std(ddof=1))**2)
+            v = self.ddof()
+            short = math.sqrt(sum(numerator) / v)
+            if min(self.n) >= 15:
+                return round(short, 7)
+            else:
+                denominator = tbl.get_c4(sum(self.n)) * (1 + v)
+                return round(short / denominator, 7)
 
     def cp(self):
         """Calculate Cp."""
@@ -312,7 +316,7 @@ class Capability():
             return min(self.ppl(), self.ppu())
 
     def k(self):
-        """Calculate K. Divergence of population mean from target value."""
+        """Calculate k, the divergence of population mean from target value."""
         if self.usl is None or self.lsl is None:
             raise ValueError('Need both USL and LSL for calculatiion.')
         if self.target is None:
@@ -374,26 +378,22 @@ class Capability():
         """Return the Sigma level."""
         return round(self.z_min(s) + 1.5, 1)
 
-    def calculate_ddof(self):
+    def ddof(self):
         """Calculate the degrees of freedom."""
-        if self.n == 1:
-            raise ValueError('At least two data points are needed!')
-        elif self.m == 1 and self.n < 15:
-            return 0.88 * (self.n - 1)
-        elif self.m == 1 and self.n >= 15:
-            return self.n - 1
-        else:
-            s = []
-            for i in range(self.m):
-                s.extend(self.lst[i])
-            if len(s) >= 15:
-                return len(s) - 1
+        if self.lofl == False:
+            if self.n[0] == 1:
+                raise ValueError('At least two data points are needed!')
             else:
-                return 0.88 * (len(s) - 1)
+                return self.n[0] - 1
+        else:
+            v = []
+            for sample in range(self.m):
+                v.append(self.n[sample] - 1)
+            return sum(v)
 
     def confidence(self, ci=0.95, cal='cpk'):
         """Return the 100(1-a)% confidence iterval for Cp, Pp, Cpk or Ppk."""
-        v = self.calculate_ddof()
+        v = self.ddof()
         a = 1 - ci
 
         if cal == 'cp':
@@ -406,8 +406,8 @@ class Capability():
             c = self.ppk()
 
         if cal == 'cpk' or cal == 'ppk':
-            if self.m == 1:
-                n = self.n
+            if self.lofl == False:
+                n = self.n[0]
             else:
                 n = sum(self.n)
 
@@ -436,9 +436,37 @@ class Capability():
                 i_high = round(c * np.sqrt(chi2.ppf(1 - a / 2, v) / v), 3)
             return [i_low, i_high]
 
+    def low_interval(self, ci=0.95, cal='cpk'):
+        """Return the 100(1-a)% lower confidence."""
+        v = self.ddof()
+        a = 1 - ci
+
+        if cal == 'cp':
+            c = self.cp()
+        elif cal == 'pp':
+            c = self.pp()
+        elif cal == 'cpk':
+            c = self.cpk()
+        elif cal == 'ppk':
+            c = self.ppk()
+
+        if cal == 'cpk' or cal == 'ppk':
+            if self.lofl == False:
+                n = self.n[0]
+            else:
+                n = sum(self.n)
+
+            interim = np.sqrt((1 / (9 * n * c**2)) + 1 / (2 * v))
+            interval = round(c * (1 - norm.ppf(1 - a) * interim), 3)
+            return interval
+
+        elif cal == 'cp' or cal == 'pp':
+            interval = round(c * np.sqrt(chi2.ppf(a, v) / v), 3)
+            return interval
+
     def plot(self, kde=True):
         """Plot a hitogram with limits."""
-        annotation = f'--------------------------------------'
+        annotation = f'------------------------------------------------'
         try:
             txt = '\nC$_{{p}}$'
             annotation += f'{txt:<5}{str("="):^3}{self.cp():<7}{self.confidence(cal="cp")}'
@@ -453,8 +481,8 @@ class Capability():
             pass
         txt = '\nP$_{{pk}}$'
         annotation += f'{txt:<5}{str("="):^3}{self.ppk():<7}{self.confidence(cal="cpk")}'
-        annotation += f'\n--------------------------------------'
-        annotation += f'\nn  = {self.lst.size}'
+        annotation += f'\n-----------------------------------------------'
+        annotation += f'\ntotal points  = {sum(self.n)}'
         annotation += f'\nsamples = {self.m}'
         if self.m == 1:
             sub_n = self.n[0]
@@ -463,8 +491,8 @@ class Capability():
             if sub_n == len(self.n):
                 sub_n = self.n[0]
             else:
-                sub_n = f'Variable subsamles. From {min(self.n)} to {max(self.n)}'
-        annotation += f'\nsubsamples = {sub_n}'
+                sub_n = f'Variable subsamles.\n                        From {min(self.n)} to {max(self.n)}'
+        annotation += f'\nsupsamples = {sub_n}'
         if self.usl is not None:
             annotation += f'\nUSL = {self.usl}'
         if self.lsl is not None:
@@ -489,10 +517,10 @@ class Capability():
         if self.timestamp is not None:
             annotation += f'\n\n{self.timestamp}'
 
-        if self.m > 1:
+        if self.lofl == True:
             s = []
-            for i in range(self.m):
-                s.extend(self.lst[i])
+            for sample in range(self.m):
+                s.extend(self.lst[sample])
         else:
             s = self.lst
 
@@ -578,7 +606,7 @@ class Capability():
         plt.legend(
             framealpha=1,
             edgecolor='white',
-            fontsize=9,
+            fontsize=8,
             # frameon=False,
             bbox_to_anchor=(0.05, 1),
             loc='upper left')
@@ -586,7 +614,7 @@ class Capability():
         plt.title(self.title)
         annotation_box = AnchoredText(annotation,
                                       loc='lower left',
-                                      prop=dict(size=9),
+                                      prop=dict(size=8.5),
                                       frameon=False,
                                       bbox_to_anchor=(1., 0.),
                                       bbox_transform=ax.transAxes)
