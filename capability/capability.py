@@ -239,7 +239,7 @@ class Capability():
             if len(long_list) >= 15:
                 return round(stdv(long_list), 7)
             else:
-                return round(stdv(long_list) / tbl.get_c4(len(s)), 7)
+                return round(stdv(long_list) / tbl.get_c4(len(long_list)), 7)
 
     def s_short(self):
         """Calculate the short term standard deviation."""
@@ -463,6 +463,12 @@ class Capability():
         elif cal == 'cp' or cal == 'pp':
             interval = round(c * np.sqrt(chi2.ppf(a, v) / v), 3)
             return interval
+
+    def min_sample(self, alpha=0.05, power=0.95, Ha=1.33):
+        """Return the minimum sample size."""
+        samples = (self.s_long()**2) * (((norm.ppf(power) - norm.ppf(alpha)) /
+                                         (self.cpk() - Ha))**2)
+        return samples
 
     def plot(self, kde=True):
         """Plot a hitogram with limits."""
