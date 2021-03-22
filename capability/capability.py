@@ -36,6 +36,11 @@ class Capability():
     lsl: int or float, optional. Default is None.
         Process lower specification limit.
     target: int of float, optional. Default is None.
+        The process target specification.
+    normalize: boolean.
+        Wheather to normalize or not the data.
+    alpha: float.
+        The desired (1-alpha)% confidence level.
 
     Methods
     -------
@@ -53,31 +58,31 @@ class Capability():
         The number of supsamples in each sample group.
     subsample_means: list of floats.
         Return the n means for each sample group m.
-    x_bar(): float.
+    x_bar: float.
         Calculate the x-bar.
-    r_bar(): float.
+    r_bar: float.
         Calculate the r-bar.
-    s_long(): float.
+    s_long: float.
         Calculate the long term standard deviation.
-    s_short(): float.
+    s_short: float.
         Calculate the short term standard deviation.
-    cp(): float.
+    cp: float.
         Calculate Cp. Needs USL and LSL to be specified..
-    cpu(): float.
+    cpu: float.
         Calculate Cpu. Needs USL to be specified.
-    cpl(): float.
+    cpl: float.
         Calculate Cpl. Needs LSL to be specified.
-    cpk(): float.
+    cpk: float.
         Calculate Cpk. Needs USL or LSL to be specified.
-    pp(): float.
+    pp: float.
         Calculate Pp. Needs USL and LSL to be specified..
-    ppu(): float.
+    ppu: float.
         Calculate Ppu. Needs USL to be specified.
-    ppl(): float.
+    ppl: float.
         Calculate Ppl. Needs LSL to be specified.
-    ppk(): float.
+    ppk: float.
         Calculate Ppk. Needs USL or LSL to be specified.
-    k(): float.
+    k: float.
         Calculates divergence of population mean from target value.
         USL, LSL and Target must be specified.
     zl(s='short'): float.
@@ -108,7 +113,7 @@ class Capability():
         Options: 'short', 'long'.
         Return the Sigma level for short or long standard deviation.
         Needs USL or LSL to be specified.
-    ddof():
+    ddof: integer
         Calculate the degrees of freedom.
     confidence(ci=0.95, cal='cpk'): list of float.
         Returns the 100(1-a)% confidence iterval for Cp, Pp, Cpk or Ppk.
@@ -155,16 +160,13 @@ class Capability():
         Count the number of subsamples in a sample.
     subsample_means(self): float
         Return the mean for each sample.
-
-    @author: Alexandre Baharov
-
     """
     def __init__(self,
                  lst,
                  lsl=None,
                  usl=None,
                  target=None,
-                 normalise=True,
+                 normalize=True,
                  alpha=0.05):
         """Initiliaze attributes to describe a variable."""
         self.lst = lst
@@ -210,7 +212,7 @@ class Capability():
             if self.target is None:
                 self.target = self.midpoint
 
-        if normalise == True:
+        if normalize == True:
             self._make_normal()
 
     @staticmethod
@@ -619,7 +621,7 @@ class Capability():
                 Capability(sublist,
                            lsl=self.lsl,
                            usl=self.usl,
-                           normalise=False).n_min(err=err) for sublist in lists
+                           normalize=False).n_min(err=err) for sublist in lists
             ])
 
         def calculate_n(cpk_eval, alpha, err):
@@ -646,7 +648,7 @@ class Capability():
             n_long = Capability(l_long,
                                 usl=self.usl,
                                 lsl=self.lsl,
-                                normalise=False).n_min(err=err)
+                                normalize=False).n_min(err=err)
             l4 = Capability.brake_down(lst=l_long, n=n_long)
             n1 = n_sub_min(l4)
             l_temp = Capability.brake_down(lst=l_long, n=n1)
